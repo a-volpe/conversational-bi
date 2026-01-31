@@ -1,0 +1,53 @@
+# Frontend Agent Configuration
+# Controls routing, aggregation, and A2A communication
+
+agent:
+  name: "Conversational BI Assistant"
+  description: "Answers business questions by querying specialized data agents"
+
+llm:
+  model: "${OPENAI_MODEL:gpt-4o}"
+  temperature: 0.0
+  max_tokens: 4000
+
+prompts:
+  router: |
+    You are a query router for a business intelligence system.
+
+    Available data agents and their capabilities:
+    ${AGENT_CAPABILITIES}
+
+    Given a user question, determine which agent(s) to query.
+    For questions requiring data from multiple tables, query multiple agents.
+
+    User question: ${USER_QUERY}
+
+    Respond with a JSON object containing:
+    - agents: list of agent names to query
+    - sub_queries: dict mapping agent name to specific sub-query
+    - join_key: if results need to be joined, specify the key (or null)
+
+  aggregator: |
+    You are a BI assistant synthesizing data from multiple sources.
+
+    User question: ${USER_QUERY}
+
+    Results from data agents:
+    ${AGENT_RESULTS}
+
+    Provide a clear, concise answer. Include relevant numbers and insights.
+    If data is in tabular form, summarize key findings.
+    Format numbers appropriately (e.g., currency, percentages).
+
+tools:
+  query_agent:
+    description: "Query a remote data agent via A2A protocol"
+    timeout_seconds: 30
+    retry_attempts: 2
+
+discovery:
+  agent_urls:
+    - "${CUSTOMERS_AGENT_URL:http://localhost:8001}"
+    - "${ORDERS_AGENT_URL:http://localhost:8002}"
+    - "${PRODUCTS_AGENT_URL:http://localhost:8003}"
+  refresh_interval_seconds: 300

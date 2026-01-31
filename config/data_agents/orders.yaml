@@ -1,0 +1,87 @@
+# Orders Data Agent Configuration
+
+agent:
+  name: "Orders Data Agent"
+  description: "Specialized agent for order and sales analytics"
+  version: "1.0.0"
+  port: 8002
+  table: orders  # Reference to schema.yaml
+
+llm:
+  model: "${OPENAI_MODEL:gpt-4o}"
+  temperature: 0.0
+  max_tokens: 2000
+
+prompts:
+  sql_generator: |
+    You are a PostgreSQL expert for order/sales data.
+    Generate a SELECT query to answer the user's question.
+
+    Table: orders
+    Columns and descriptions:
+    ${COLUMN_INFO}
+
+    Rules:
+    1. Only SELECT queries allowed
+    2. Use $1, $2, etc. for parameters (never inline values)
+    3. Use appropriate aggregates (COUNT, SUM, AVG) for summaries
+    4. Add ORDER BY for sorted results
+    5. Use LIMIT for "top N" queries
+    6. For revenue calculations, use SUM(total_amount)
+    7. For date filtering, use TIMESTAMP comparisons
+
+    Question: ${USER_QUERY}
+
+    Return JSON with: sql, parameters, explanation
+
+skills:
+  - id: order_count
+    name: "Order Count"
+    description: "Count orders with optional filtering by status, date range, or customer"
+    tags: ["count", "orders", "aggregation"]
+    examples:
+      - "How many orders this month?"
+      - "Count pending orders"
+      - "Orders by status breakdown"
+
+  - id: revenue_analysis
+    name: "Revenue Analysis"
+    description: "Analyze sales revenue by time period, product, or customer"
+    tags: ["revenue", "sales", "aggregation"]
+    examples:
+      - "What is our total revenue this quarter?"
+      - "Revenue by month for the last year"
+      - "Average order value"
+
+  - id: order_trends
+    name: "Order Trends"
+    description: "Time-series analysis of order volume and revenue"
+    tags: ["trends", "time-series", "orders"]
+    examples:
+      - "Show order volume trend by week"
+      - "Peak ordering times"
+      - "Year-over-year order growth"
+
+  - id: order_details
+    name: "Order Details"
+    description: "Retrieve specific order information"
+    tags: ["list", "orders", "details"]
+    examples:
+      - "List recent orders"
+      - "Show cancelled orders this month"
+      - "Orders over $1000"
+
+sql_validation:
+  allowed_tables:
+    - orders
+  forbidden_keywords:
+    - DROP
+    - DELETE
+    - INSERT
+    - UPDATE
+    - ALTER
+    - TRUNCATE
+    - CREATE
+    - GRANT
+    - REVOKE
+  max_rows: 1000

@@ -1,0 +1,86 @@
+# Customers Data Agent Configuration
+
+agent:
+  name: "Customers Data Agent"
+  description: "Specialized agent for customer analytics"
+  version: "1.0.0"
+  port: 8001
+  table: customers  # Reference to schema.yaml
+
+llm:
+  model: "${OPENAI_MODEL:gpt-4o}"
+  temperature: 0.0
+  max_tokens: 2000
+
+prompts:
+  sql_generator: |
+    You are a PostgreSQL expert for customer data.
+    Generate a SELECT query to answer the user's question.
+
+    Table: customers
+    Columns and descriptions:
+    ${COLUMN_INFO}
+
+    Rules:
+    1. Only SELECT queries allowed
+    2. Use $1, $2, etc. for parameters (never inline values)
+    3. Use appropriate aggregates (COUNT, SUM, AVG) for summaries
+    4. Add ORDER BY for sorted results
+    5. Use LIMIT for "top N" queries
+    6. For date filtering, use TIMESTAMP comparisons
+
+    Question: ${USER_QUERY}
+
+    Return JSON with: sql, parameters, explanation
+
+skills:
+  - id: customer_count
+    name: "Customer Count"
+    description: "Count customers with optional filtering by region, segment, or date range"
+    tags: ["count", "customers", "aggregation"]
+    examples:
+      - "How many customers do we have?"
+      - "Count customers in Europe"
+      - "How many Corporate segment customers joined this year?"
+
+  - id: customer_ltv
+    name: "Lifetime Value Analysis"
+    description: "Analyze customer lifetime value (LTV) by segment, region, or cohort"
+    tags: ["ltv", "revenue", "customers", "aggregation"]
+    examples:
+      - "What is the average customer lifetime value?"
+      - "Show LTV by customer segment"
+      - "Top 10 customers by lifetime value"
+
+  - id: customer_trends
+    name: "Customer Trends"
+    description: "Time-series analysis of customer acquisition, churn, and activity"
+    tags: ["trends", "time-series", "customers"]
+    examples:
+      - "Show new customer sign-ups by month"
+      - "Customer growth trend over the last year"
+      - "When do we get the most new customers?"
+
+  - id: customer_list
+    name: "Customer List"
+    description: "Retrieve filtered list of customers with their details"
+    tags: ["list", "customers", "details"]
+    examples:
+      - "List all customers from Asia Pacific"
+      - "Show inactive customers"
+      - "Get customers in the Corporate segment"
+
+sql_validation:
+  allowed_tables:
+    - customers
+  forbidden_keywords:
+    - DROP
+    - DELETE
+    - INSERT
+    - UPDATE
+    - ALTER
+    - TRUNCATE
+    - CREATE
+    - GRANT
+    - REVOKE
+  max_rows: 1000

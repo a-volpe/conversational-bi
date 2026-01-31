@@ -1,0 +1,129 @@
+# Single source of truth for all table schemas
+# Used by: migrations, data agents, prompt generation
+
+tables:
+  customers:
+    description: "Customer data for e-commerce analytics"
+    columns:
+      - name: customer_id
+        type: UUID
+        primary_key: true
+        description: "Unique customer identifier"
+      - name: email
+        type: VARCHAR(255)
+        unique: true
+        description: "Customer email address"
+      - name: full_name
+        type: VARCHAR(255)
+        description: "Customer full name"
+      - name: region
+        type: VARCHAR(100)
+        allowed_values: ["North America", "Europe", "Asia Pacific", "Latin America"]
+        description: "Geographic region"
+      - name: segment
+        type: VARCHAR(50)
+        allowed_values: ["Consumer", "Corporate", "Small Business"]
+        description: "Customer segment"
+      - name: created_at
+        type: TIMESTAMP WITH TIME ZONE
+        default: CURRENT_TIMESTAMP
+        description: "Account creation date"
+      - name: lifetime_value
+        type: DECIMAL(12,2)
+        default: "0.00"
+        description: "Total customer spend"
+      - name: order_count
+        type: INTEGER
+        default: 0
+        description: "Number of orders placed"
+      - name: last_order_date
+        type: TIMESTAMP WITH TIME ZONE
+        nullable: true
+        description: "Date of most recent order"
+      - name: is_active
+        type: BOOLEAN
+        default: true
+        description: "Whether customer is active"
+    indexes:
+      - columns: [region]
+      - columns: [segment]
+      - columns: [created_at]
+
+  orders:
+    description: "Order transactions"
+    columns:
+      - name: order_id
+        type: UUID
+        primary_key: true
+        description: "Unique order identifier"
+      - name: customer_id
+        type: UUID
+        foreign_key: customers.customer_id
+        description: "Reference to customer"
+      - name: product_id
+        type: UUID
+        foreign_key: products.product_id
+        description: "Reference to product"
+      - name: quantity
+        type: INTEGER
+        description: "Quantity ordered"
+      - name: unit_price
+        type: DECIMAL(10,2)
+        description: "Price per unit at time of order"
+      - name: total_amount
+        type: DECIMAL(12,2)
+        description: "Total order amount"
+      - name: order_date
+        type: TIMESTAMP WITH TIME ZONE
+        default: CURRENT_TIMESTAMP
+        description: "When order was placed"
+      - name: status
+        type: VARCHAR(50)
+        allowed_values: ["pending", "shipped", "delivered", "cancelled"]
+        default: "pending"
+        description: "Order fulfillment status"
+    indexes:
+      - columns: [customer_id]
+      - columns: [product_id]
+      - columns: [order_date]
+      - columns: [status]
+
+  products:
+    description: "Product catalog"
+    columns:
+      - name: product_id
+        type: UUID
+        primary_key: true
+        description: "Unique product identifier"
+      - name: sku
+        type: VARCHAR(50)
+        unique: true
+        description: "Stock keeping unit"
+      - name: name
+        type: VARCHAR(255)
+        description: "Product name"
+      - name: category
+        type: VARCHAR(100)
+        allowed_values: ["Electronics", "Clothing", "Home & Garden", "Sports", "Books"]
+        description: "Product category"
+      - name: subcategory
+        type: VARCHAR(100)
+        description: "Product subcategory"
+      - name: unit_price
+        type: DECIMAL(10,2)
+        description: "Selling price"
+      - name: unit_cost
+        type: DECIMAL(10,2)
+        description: "Cost price"
+      - name: stock_quantity
+        type: INTEGER
+        default: 0
+        description: "Current inventory level"
+      - name: is_active
+        type: BOOLEAN
+        default: true
+        description: "Whether product is available"
+    indexes:
+      - columns: [category]
+      - columns: [subcategory]
+      - columns: [sku]

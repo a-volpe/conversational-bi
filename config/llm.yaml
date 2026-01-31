@@ -1,0 +1,59 @@
+# Global LLM settings
+
+default_provider: openai
+default_model: "${OPENAI_MODEL:gpt-4o}"
+
+providers:
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    models:
+      gpt-4o:
+        max_tokens: 4000
+        temperature: 0.0
+      gpt-4o-mini:
+        max_tokens: 2000
+        temperature: 0.0
+
+# Tool schemas used by agents
+tool_schemas:
+  execute_sql:
+    name: execute_sql
+    description: "Execute a parameterized SQL query"
+    parameters:
+      type: object
+      properties:
+        sql:
+          type: string
+          description: "PostgreSQL SELECT query with $1, $2 placeholders"
+        parameters:
+          type: array
+          items:
+            type: string
+          description: "Parameter values"
+        explanation:
+          type: string
+          description: "Brief explanation of query"
+      required:
+        - sql
+        - parameters
+
+  route_query:
+    name: route_query
+    description: "Route user query to appropriate data agents"
+    parameters:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            type: string
+          description: "Agent names to query"
+        sub_queries:
+          type: object
+          description: "Map of agent name to sub-query"
+        join_key:
+          type: string
+          description: "Key to join results (or null)"
+      required:
+        - agents
+        - sub_queries

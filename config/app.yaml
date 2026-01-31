@@ -1,0 +1,22 @@
+# Application Settings
+
+app:
+  name: "Conversational BI"
+  version: "0.1.0"
+  debug: "${DEBUG:false}"
+
+database:
+  url: "${DATABASE_URL}"
+  pool:
+    min_size: 2
+    max_size: 10
+
+ui:
+  streamlit:
+    port: "${STREAMLIT_PORT:8501}"
+    title: "Conversational BI"
+    page_icon: "chart_with_upwards_trend"
+
+logging:
+  level: "${LOG_LEVEL:INFO}"
+  format: "json"

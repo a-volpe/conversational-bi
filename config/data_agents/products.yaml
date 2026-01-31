@@ -1,0 +1,86 @@
+# Products Data Agent Configuration
+
+agent:
+  name: "Products Data Agent"
+  description: "Specialized agent for product catalog and inventory analytics"
+  version: "1.0.0"
+  port: 8003
+  table: products  # Reference to schema.yaml
+
+llm:
+  model: "${OPENAI_MODEL:gpt-4o}"
+  temperature: 0.0
+  max_tokens: 2000
+
+prompts:
+  sql_generator: |
+    You are a PostgreSQL expert for product catalog data.
+    Generate a SELECT query to answer the user's question.
+
+    Table: products
+    Columns and descriptions:
+    ${COLUMN_INFO}
+
+    Rules:
+    1. Only SELECT queries allowed
+    2. Use $1, $2, etc. for parameters (never inline values)
+    3. Use appropriate aggregates (COUNT, SUM, AVG) for summaries
+    4. Add ORDER BY for sorted results
+    5. Use LIMIT for "top N" queries
+    6. For margin calculations, use (unit_price - unit_cost)
+
+    Question: ${USER_QUERY}
+
+    Return JSON with: sql, parameters, explanation
+
+skills:
+  - id: product_count
+    name: "Product Count"
+    description: "Count products with optional filtering by category or status"
+    tags: ["count", "products", "aggregation"]
+    examples:
+      - "How many products do we have?"
+      - "Count products by category"
+      - "How many active products?"
+
+  - id: inventory_analysis
+    name: "Inventory Analysis"
+    description: "Analyze stock levels and inventory value"
+    tags: ["inventory", "stock", "products"]
+    examples:
+      - "What is our total inventory value?"
+      - "Products with low stock"
+      - "Stock levels by category"
+
+  - id: pricing_analysis
+    name: "Pricing Analysis"
+    description: "Analyze product pricing, costs, and margins"
+    tags: ["pricing", "margins", "products"]
+    examples:
+      - "Average product margin by category"
+      - "Most expensive products"
+      - "Products with highest margin"
+
+  - id: product_list
+    name: "Product List"
+    description: "Retrieve filtered list of products"
+    tags: ["list", "products", "details"]
+    examples:
+      - "List all Electronics products"
+      - "Show inactive products"
+      - "Products in the Clothing category"
+
+sql_validation:
+  allowed_tables:
+    - products
+  forbidden_keywords:
+    - DROP
+    - DELETE
+    - INSERT
+    - UPDATE
+    - ALTER
+    - TRUNCATE
+    - CREATE
+    - GRANT
+    - REVOKE
+  max_rows: 1000

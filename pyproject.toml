@@ -1,0 +1,92 @@
+[project]
+name = "conversational-bi"
+version = "0.1.0"
+description = "Conversational BI application using A2A protocol with multi-agent architecture"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    # A2A Protocol SDK
+    "a2a-sdk>=0.2.0",
+
+    # Web framework for A2A servers
+    "starlette>=0.41.0",
+    "uvicorn>=0.32.0",
+
+    # Database
+    "asyncpg>=0.30.0",
+    "psycopg[binary]>=3.2.0",
+
+    # LLM
+    "openai>=1.55.0",
+
+    # UI
+    "streamlit>=1.40.0",
+
+    # HTTP client for A2A discovery
+    "httpx>=0.27.0",
+
+    # Configuration
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
+
+    # LangChain (FE Agent)
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+
+    # Utilities
+    "structlog>=24.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-httpx>=0.32.0",
+
+    # Type checking
+    "mypy>=1.13.0",
+
+    # Linting & formatting
+    "ruff>=0.8.0",
+
+    # Pre-commit hooks
+    "pre-commit>=4.0.0",
+]
+
+mcp = [
+    # MCP Apps (Release 2)
+    "mcp>=1.2.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "-v --cov=src/conversational_bi --cov-report=term-missing"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
