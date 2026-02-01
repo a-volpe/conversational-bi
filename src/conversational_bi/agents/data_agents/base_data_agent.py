@@ -2,6 +2,8 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 import asyncpg
@@ -159,7 +161,8 @@ class BaseDataAgent(ABC):
 
     def _get_table_schema_description(self) -> str:
         """Get table schema description for LLM context."""
-        lines = [f"Table: {self.table_name}", "Columns:"]
+        today = date.today().isoformat()
+        lines = [f"Table: {self.table_name}", f"Today's date: {today}", "", "Columns:"]
         for col in self.table_schema.get("columns", []):
             desc = f"- {col['name']}: {col['type']}"
             if col.get("description"):
@@ -170,6 +173,7 @@ class BaseDataAgent(ABC):
 
         lines.append("")
         lines.append("Use $1, $2, etc. for parameter placeholders.")
+        lines.append("Parameters must be literal values (e.g., '2025-11-01'), NOT SQL expressions.")
         lines.append("Always use aggregate functions (COUNT, SUM, AVG) for summary queries.")
 
         return "\n".join(lines)
@@ -193,12 +197,54 @@ class BaseDataAgent(ABC):
             QueryExecutionError: If the query fails.
         """
         try:
+            # Convert ISO 8601 date strings to datetime objects for asyncpg
+            converted_params = [self._convert_param(p) for p in params]
             async with self.db_pool.acquire() as conn:
-                rows = await conn.fetch(sql, *params)
-                return [dict(row) for row in rows]
+                rows = await conn.fetch(sql, *converted_params)
+                return [self._serialize_row(row) for row in rows]
         except Exception as e:
             logger.error("sql_execution_failed", sql=sql[:100], error=str(e))
             raise QueryExecutionError(f"Query failed: {e}") from e
+
+    def _convert_param(self, value: Any) -> Any:
+        """Convert parameter values to types asyncpg expects."""
+        if not isinstance(value, str):
+            return value
+
+        # Try parsing as integer (e.g., '10' for stock quantity)
+        try:
+            return int(value)
+        except ValueError:
+            pass
+
+        # Try parsing as float (e.g., '99.99' for prices)
+        try:
+            return float(value)
+        except ValueError:
+            pass
+
+        # Try parsing as ISO 8601 datetime (e.g., '2025-10-01T00:00:00Z')
+        for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+            try:
+                parsed = datetime.strptime(value, fmt)
+                # Return date if the format was date-only
+                if fmt == "%Y-%m-%d":
+                    return parsed.date()
+                return parsed
+            except ValueError:
+                continue
+
+        return value
+
+    def _serialize_row(self, row: asyncpg.Record) -> dict[str, Any]:
+        """Convert a database row to a JSON-serializable dict."""
+        result = {}
+        for key, value in dict(row).items():
+            if isinstance(value, Decimal):
+                result[key] = float(value)
+            else:
+                result[key] = value
+        return result
 
     def _format_response(
         self,

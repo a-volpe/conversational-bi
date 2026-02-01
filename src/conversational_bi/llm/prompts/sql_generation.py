@@ -9,11 +9,18 @@ Rules:
 4. Include ORDER BY for sorted results
 5. Use LIMIT for "top N" queries
 6. Always alias tables in JOINs
-7. Format dates using PostgreSQL functions (DATE_TRUNC, EXTRACT, etc.)
+7. Format dates using PostgreSQL functions (DATE_TRUNC, EXTRACT, etc.) in the SQL itself
+
+IMPORTANT - Parameter values:
+- Parameters must be LITERAL values only (strings, numbers, dates)
+- NEVER pass SQL expressions or functions as parameters (e.g., "now() - interval '3 months'" is WRONG)
+- For relative date queries (e.g., "last 3 months"), compute the actual date and pass it as ISO 8601 format (YYYY-MM-DD)
+- Today's date is provided in the query context - use it to calculate relative dates
+- Example: For "orders in the last 3 months" with today being 2026-02-01, pass "2025-11-01" as the parameter
 
 Output format:
 - Return the SQL query and parameter values
-- Parameters should be strings that will be cast appropriately
+- Date parameters must be ISO 8601 format strings (e.g., "2025-10-01" or "2025-10-01T00:00:00Z")
 """
 
 CUSTOMERS_SQL_PROMPT = f"""{BASE_SQL_PROMPT}
