@@ -2,15 +2,16 @@
 
 import os
 import re
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-
 # Pattern for ${VAR} or ${VAR:default}
 ENV_VAR_PATTERN = re.compile(r"\$\{([^}:]+)(?::([^}]*))?\}")
+
+# Pattern for file:// references to external files
+FILE_REF_PATTERN = re.compile(r"^file://(.+)$")
 
 # Default config directory (relative to project root)
 # loader.py is at src/conversational_bi/config/loader.py
@@ -18,21 +19,33 @@ ENV_VAR_PATTERN = re.compile(r"\$\{([^}:]+)(?::([^}]*))?\}")
 DEFAULT_CONFIG_DIR = Path(__file__).parent.parent.parent.parent / "config"
 
 
-def substitute_env_vars(value: Any) -> Any:
+def substitute_env_vars(value: Any, config_dir: Path | None = None) -> Any:
     """
-    Recursively substitute environment variables in config values.
+    Recursively substitute environment variables and file references in config values.
 
     Supports:
     - ${VAR} - substitutes with env var, empty string if not set
     - ${VAR:default} - substitutes with env var, or default if not set
+    - file://path/to/file.md - loads content from external file (relative to config_dir)
 
     Args:
         value: Config value (string, dict, list, or other)
+        config_dir: Config directory for resolving file:// references
 
     Returns:
-        Value with environment variables substituted
+        Value with environment variables and file references substituted
     """
     if isinstance(value, str):
+        # Check for file:// reference first
+        file_match = FILE_REF_PATTERN.match(value)
+        if file_match and config_dir:
+            file_path = config_dir / file_match.group(1)
+            if file_path.exists():
+                return file_path.read_text(encoding="utf-8")
+            else:
+                raise FileNotFoundError(f"Prompt file not found: {file_path}")
+
+        # Then substitute environment variables
         def replace_match(match: re.Match) -> str:
             var_name = match.group(1)
             default = match.group(2)
@@ -44,21 +57,22 @@ def substitute_env_vars(value: Any) -> Any:
         return ENV_VAR_PATTERN.sub(replace_match, value)
 
     elif isinstance(value, dict):
-        return {k: substitute_env_vars(v) for k, v in value.items()}
+        return {k: substitute_env_vars(v, config_dir) for k, v in value.items()}
 
     elif isinstance(value, list):
-        return [substitute_env_vars(item) for item in value]
+        return [substitute_env_vars(item, config_dir) for item in value]
 
     else:
         return value
 
 
-def load_yaml_config(path: Path) -> dict[str, Any]:
+def load_yaml_config(path: Path, config_dir: Path | None = None) -> dict[str, Any]:
     """
     Load a YAML configuration file with environment variable substitution.
 
     Args:
         path: Path to the YAML file
+        config_dir: Config directory for resolving file:// references
 
     Returns:
         Parsed configuration dictionary
@@ -69,10 +83,12 @@ def load_yaml_config(path: Path) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"Configuration file not found: {path}")
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
-    return substitute_env_vars(data)
+    # Use the config file's parent directory if config_dir not provided
+    resolve_dir = config_dir if config_dir else path.parent
+    return substitute_env_vars(data, resolve_dir)
 
 
 class ConfigLoader:
@@ -96,7 +112,7 @@ class ConfigLoader:
     def _load_cached(self, key: str, path: Path) -> dict[str, Any]:
         """Load config with caching."""
         if key not in self._cache:
-            self._cache[key] = load_yaml_config(path)
+            self._cache[key] = load_yaml_config(path, self.config_dir)
         return self._cache[key]
 
     def load_schema(self) -> dict[str, Any]:

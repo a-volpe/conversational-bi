@@ -43,19 +43,37 @@ class OpenAIClient:
     Provides methods for SQL generation, query analysis, and response synthesis.
     """
 
-    def __init__(self, api_key: str | None = None, model: str = "gpt-4o", temperature: float = 0.0):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        model: str = "gpt-5-mini",
+        temperature: float | None = None,
+        reasoning_effort: str = "low",
+    ):
         """
         Initialize the OpenAI client.
 
         Args:
             api_key: OpenAI API key. Defaults to settings.openai_api_key.
             model: Model to use for completions.
-            temperature: Temperature for completions (0.0-2.0). Lower is more deterministic.
+            temperature: Temperature for completions (0.0-2.0). Not supported for GPT-5 models.
+            reasoning_effort: Reasoning effort for GPT-5 models (low, medium, high).
         """
         self._api_key = api_key or get_settings().openai_api_key
         self._model = model
         self._temperature = temperature
+        self._reasoning_effort = reasoning_effort
         self._client = AsyncOpenAI(api_key=self._api_key)
+
+    def _is_gpt5_model(self) -> bool:
+        """Check if the current model is a GPT-5 series model."""
+        return self._model.startswith("gpt-5")
+
+    def _get_model_params(self) -> dict[str, Any]:
+        """Get model-specific parameters for API calls."""
+        if self._is_gpt5_model():
+            return {"reasoning_effort": self._reasoning_effort}
+        return {"temperature": self._temperature if self._temperature is not None else 0.0}
 
     async def generate_sql(
         self,
@@ -89,7 +107,7 @@ class OpenAIClient:
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                temperature=self._temperature,
+                **self._get_model_params(),
                 tools=[
                     {
                         "type": "function",
@@ -189,7 +207,7 @@ class OpenAIClient:
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                temperature=self._temperature,
+                **self._get_model_params(),
                 tools=[
                     {
                         "type": "function",
@@ -292,7 +310,7 @@ class OpenAIClient:
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                temperature=self._temperature,
+                **self._get_model_params(),
             )
 
             return response.choices[0].message.content or "Unable to generate response."

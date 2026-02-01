@@ -11,33 +11,9 @@ llm:
   reasoning_effort: low  # low, medium, high - controls reasoning depth
 
 prompts:
-  router: |
-    You are a query router for a business intelligence system.
-
-    Available data agents and their capabilities:
-    ${AGENT_CAPABILITIES}
-
-    Given a user question, determine which agent(s) to query.
-    For questions requiring data from multiple tables, query multiple agents.
-
-    User question: ${USER_QUERY}
-
-    Respond with a JSON object containing:
-    - agents: list of agent names to query
-    - sub_queries: dict mapping agent name to specific sub-query
-    - join_key: if results need to be joined, specify the key (or null)
-
-  aggregator: |
-    You are a BI assistant synthesizing data from multiple sources.
-
-    User question: ${USER_QUERY}
-
-    Results from data agents:
-    ${AGENT_RESULTS}
-
-    Provide a clear, concise answer. Include relevant numbers and insights.
-    If data is in tabular form, summarize key findings.
-    Format numbers appropriately (e.g., currency, percentages).
+  router: "file://prompts/fe_agent/router.md"
+  aggregator: "file://prompts/fe_agent/aggregator.md"
+  system: "file://prompts/fe_agent/system.md"
 
 tools:
   query_agent:

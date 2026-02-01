@@ -1,78 +1,23 @@
-"""Customers data agent implementation."""
+"""Customers data agent implementation.
 
-import asyncpg
+NOTE: This module provides backward compatibility. The production code uses
+CustomersDataAgent from base_data_agent.py which is config-driven.
+"""
 
-from conversational_bi.agents.data_agents.base_data_agent import BaseDataAgent
-from conversational_bi.llm.openai_client import OpenAIClient
-from conversational_bi.llm.prompts import CUSTOMERS_SQL_PROMPT
+from conversational_bi.agents.data_agents.base_data_agent import CustomersDataAgent
 
+# Re-export for backward compatibility
+__all__ = ["CustomersAgent", "create_customers_agent_card"]
 
-class CustomersAgent(BaseDataAgent):
-    """
-    Data agent for the customers table.
-
-    Handles queries about customer counts, segmentation, lifetime value,
-    regional distribution, and customer trends over time.
-    """
-
-    ALLOWED_COLUMNS = [
-        "customer_id",
-        "email",
-        "full_name",
-        "region",
-        "segment",
-        "created_at",
-        "lifetime_value",
-        "order_count",
-        "last_order_date",
-        "is_active",
-    ]
-
-    def __init__(self, db_pool: asyncpg.Pool, llm_client: OpenAIClient):
-        """
-        Initialize the customers agent.
-
-        Args:
-            db_pool: Database connection pool.
-            llm_client: OpenAI client for SQL generation.
-        """
-        super().__init__(
-            db_pool=db_pool,
-            llm_client=llm_client,
-            table_name="customers",
-            allowed_columns=self.ALLOWED_COLUMNS,
-        )
-
-    def _get_system_prompt(self) -> str:
-        """Return the system prompt for SQL generation."""
-        return CUSTOMERS_SQL_PROMPT
-
-    def _get_table_schema(self) -> str:
-        """Return the table schema description."""
-        return """
-        Table: customers
-        Columns:
-        - customer_id: UUID (primary key)
-        - email: VARCHAR(255) (unique)
-        - full_name: VARCHAR(255)
-        - region: VARCHAR(100) - values: 'North America', 'Europe', 'Asia Pacific', 'Latin America'
-        - segment: VARCHAR(50) - values: 'Consumer', 'Corporate', 'Small Business'
-        - created_at: TIMESTAMP WITH TIME ZONE
-        - lifetime_value: DECIMAL(12, 2)
-        - order_count: INTEGER
-        - last_order_date: TIMESTAMP WITH TIME ZONE
-        - is_active: BOOLEAN
-
-        Use $1, $2, etc. for parameter placeholders.
-        Always use aggregate functions (COUNT, SUM, AVG) for summary queries.
-        """
+# Alias for backward compatibility
+CustomersAgent = CustomersDataAgent
 
 
 def create_customers_agent_card(base_url: str = "http://localhost:8001") -> dict:
     """
     Create the Agent Card for the Customers Data Agent.
 
-    This card is discoverable at: {base_url}/.well-known/agent-card.json
+    NOTE: This function is deprecated. Use CustomersDataAgent.get_agent_card() instead.
 
     Args:
         base_url: Base URL where the agent is hosted.

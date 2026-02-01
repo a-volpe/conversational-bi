@@ -46,11 +46,17 @@ class FEAgent:
         self.llm_config = self.config_loader.load_llm_config()
 
         # Initialize LLM
-        self.llm = ChatOpenAI(
-            model=self.config["llm"].get("model", self.llm_config.get("default_model", "gpt-4.1-mini")),
-            temperature=self.config["llm"].get("temperature", 0.0),
-            max_tokens=self.config["llm"].get("max_tokens", 4000),
-        )
+        model = self.config["llm"].get("model", self.llm_config.get("default_model", "gpt-5-mini"))
+        llm_kwargs = {
+            "model": model,
+            "max_tokens": self.config["llm"].get("max_tokens", 4000),
+        }
+        # GPT-5 models use reasoning_effort instead of temperature
+        if model.startswith("gpt-5"):
+            llm_kwargs["reasoning_effort"] = self.config["llm"].get("reasoning_effort", "low")
+        else:
+            llm_kwargs["temperature"] = self.config["llm"].get("temperature", 0.0)
+        self.llm = ChatOpenAI(**llm_kwargs)
 
         # Agent discovery
         agent_urls = self.config["discovery"]["agent_urls"]
@@ -99,7 +105,11 @@ class FEAgent:
         """Build the system prompt with discovered agent capabilities."""
         capabilities = self.discovery.get_capabilities_summary()
 
-        base_prompt = self.config["prompts"].get("router", "")
+        # Try system prompt first, fall back to router for backward compatibility
+        base_prompt = self.config["prompts"].get("system", "")
+        if not base_prompt:
+            base_prompt = self.config["prompts"].get("router", "")
+
         if "${AGENT_CAPABILITIES}" in base_prompt:
             return base_prompt.replace("${AGENT_CAPABILITIES}", capabilities)
 

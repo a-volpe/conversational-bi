@@ -1,6 +1,6 @@
 """Base class for data agents with config-driven SQL validation and execution."""
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
@@ -76,8 +76,9 @@ class BaseDataAgent(ABC):
         if not self.llm_client:
             llm_config = self.config_loader.load_llm_config()
             self.llm_client = OpenAIClient(
-                model=self.agent_config["llm"].get("model", llm_config.get("default_model", "gpt-4o")),
-                temperature=self.agent_config["llm"].get("temperature", 0.0),
+                model=self.agent_config["llm"].get("model", llm_config.get("default_model", "gpt-5-mini")),
+                temperature=self.agent_config["llm"].get("temperature"),
+                reasoning_effort=self.agent_config["llm"].get("reasoning_effort", "low"),
             )
 
         # Build system prompt with column info

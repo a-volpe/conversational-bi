@@ -1,77 +1,23 @@
-"""Orders data agent implementation."""
+"""Orders data agent implementation.
 
-import asyncpg
+NOTE: This module provides backward compatibility. The production code uses
+OrdersDataAgent from base_data_agent.py which is config-driven.
+"""
 
-from conversational_bi.agents.data_agents.base_data_agent import BaseDataAgent
-from conversational_bi.llm.openai_client import OpenAIClient
-from conversational_bi.llm.prompts import ORDERS_SQL_PROMPT
+from conversational_bi.agents.data_agents.base_data_agent import OrdersDataAgent
 
+# Re-export for backward compatibility
+__all__ = ["OrdersAgent", "create_orders_agent_card"]
 
-class OrdersAgent(BaseDataAgent):
-    """
-    Data agent for the orders table.
-
-    Handles queries about revenue, order counts, trends, and performance.
-    """
-
-    ALLOWED_COLUMNS = [
-        "order_id",
-        "customer_id",
-        "product_id",
-        "quantity",
-        "unit_price",
-        "total_amount",
-        "discount",
-        "order_date",
-        "status",
-        "ship_date",
-        "ship_region",
-    ]
-
-    def __init__(self, db_pool: asyncpg.Pool, llm_client: OpenAIClient):
-        """
-        Initialize the orders agent.
-
-        Args:
-            db_pool: Database connection pool.
-            llm_client: OpenAI client for SQL generation.
-        """
-        super().__init__(
-            db_pool=db_pool,
-            llm_client=llm_client,
-            table_name="orders",
-            allowed_columns=self.ALLOWED_COLUMNS,
-        )
-
-    def _get_system_prompt(self) -> str:
-        """Return the system prompt for SQL generation."""
-        return ORDERS_SQL_PROMPT
-
-    def _get_table_schema(self) -> str:
-        """Return the table schema description."""
-        return """
-        Table: orders
-        Columns:
-        - order_id: UUID (primary key)
-        - customer_id: UUID (foreign key to customers)
-        - product_id: UUID (foreign key to products)
-        - quantity: INTEGER
-        - unit_price: DECIMAL(10, 2)
-        - total_amount: DECIMAL(12, 2)
-        - discount: DECIMAL(5, 2)
-        - order_date: TIMESTAMP WITH TIME ZONE
-        - status: VARCHAR(50) - values: 'pending', 'shipped', 'delivered', 'cancelled'
-        - ship_date: TIMESTAMP WITH TIME ZONE
-        - ship_region: VARCHAR(100)
-
-        Use $1, $2, etc. for parameter placeholders.
-        Always use aggregate functions (COUNT, SUM, AVG) for summary queries.
-        """
+# Alias for backward compatibility
+OrdersAgent = OrdersDataAgent
 
 
 def create_orders_agent_card(base_url: str = "http://localhost:8002") -> dict:
     """
     Create the Agent Card for the Orders Data Agent.
+
+    NOTE: This function is deprecated. Use OrdersDataAgent.get_agent_card() instead.
 
     Args:
         base_url: Base URL where the agent is hosted.

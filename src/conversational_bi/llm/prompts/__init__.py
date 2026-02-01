@@ -1,15 +1,8 @@
-"""LLM prompts for the conversational BI application."""
+"""LLM prompts for the conversational BI application.
 
-from conversational_bi.llm.prompts.sql_generation import (
-    BASE_SQL_PROMPT,
-    CUSTOMERS_SQL_PROMPT,
-    ORDERS_SQL_PROMPT,
-    PRODUCTS_SQL_PROMPT,
-)
+NOTE: Prompts are now loaded from markdown files in config/prompts/.
+This module is kept for backward compatibility but is deprecated.
+Use the config loader to load prompts from markdown files instead.
+"""
 
-__all__ = [
-    "BASE_SQL_PROMPT",
-    "CUSTOMERS_SQL_PROMPT",
-    "ORDERS_SQL_PROMPT",
-    "PRODUCTS_SQL_PROMPT",
-]
+__all__: list[str] = []

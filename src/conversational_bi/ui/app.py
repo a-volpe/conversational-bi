@@ -4,9 +4,9 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from dotenv import load_dotenv
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 
 # Load .env from project root, override system env vars
 load_dotenv(Path(__file__).parent.parent.parent.parent / ".env", override=True)
@@ -112,8 +112,8 @@ def main():
                             # Try to parse data from tool output
                             try:
                                 # Look for data in the output
-                                import re
                                 import ast
+                                import re
                                 matches = re.findall(r"\{[^{}]+\}", output)
                                 if matches:
                                     data_to_show = [ast.literal_eval(m) for m in matches[:10]]

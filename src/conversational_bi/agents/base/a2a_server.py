@@ -1,7 +1,8 @@
 """A2A server wrapper for data agents."""
 
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import structlog
 from starlette.applications import Starlette
