@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 import asyncpg
 import structlog
@@ -243,6 +244,10 @@ class BaseDataAgent(ABC):
         for key, value in dict(row).items():
             if isinstance(value, Decimal):
                 result[key] = float(value)
+            elif isinstance(value, UUID):
+                result[key] = str(value)
+            elif isinstance(value, (datetime, date)):
+                result[key] = value.isoformat()
             else:
                 result[key] = value
         return result
