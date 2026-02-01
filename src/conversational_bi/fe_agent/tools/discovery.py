@@ -80,6 +80,8 @@ class AgentDiscovery:
         self.timeout = timeout
         self._discovered: list[DiscoveredAgent] = []
 
+
+    #TODO: from langsmith trace seems it discovers agents twice
     @traceable(name="discover_agents", run_type="chain")
     async def discover_all(self) -> list[DiscoveredAgent]:
         """

@@ -12,7 +12,7 @@ __all__ = ["OrdersAgent", "create_orders_agent_card"]
 # Alias for backward compatibility
 OrdersAgent = OrdersDataAgent
 
-
+# TODO: isn't working: need to pass also table schemas to the agent card for better discovery
 def create_orders_agent_card(base_url: str = "http://localhost:8002") -> dict:
     """
     Create the Agent Card for the Orders Data Agent.
