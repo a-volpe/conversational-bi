@@ -1,10 +1,21 @@
 """Agent discovery via A2A protocol."""
 
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
 import structlog
+
+# LangSmith tracing (enabled via LANGCHAIN_TRACING_V2=true)
+_langsmith_enabled = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+if _langsmith_enabled:
+    from langsmith import traceable
+else:
+    def traceable(*args, **kwargs):  # type: ignore[misc]
+        def decorator(func):
+            return func
+        return decorator if not args or callable(args[0]) is False else args[0]
 
 logger = structlog.get_logger()
 
@@ -69,6 +80,7 @@ class AgentDiscovery:
         self.timeout = timeout
         self._discovered: list[DiscoveredAgent] = []
 
+    @traceable(name="discover_agents", run_type="chain")
     async def discover_all(self) -> list[DiscoveredAgent]:
         """
         Discover all configured agents.

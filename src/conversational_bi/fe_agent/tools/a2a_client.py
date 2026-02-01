@@ -1,5 +1,6 @@
 """A2A client tools for LangChain agent."""
 
+import os
 from typing import Any
 
 import httpx
@@ -8,6 +9,16 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
 from conversational_bi.fe_agent.tools.discovery import DiscoveredAgent
+
+# LangSmith tracing (enabled via LANGCHAIN_TRACING_V2=true)
+_langsmith_enabled = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+if _langsmith_enabled:
+    from langsmith import traceable
+else:
+    def traceable(*args, **kwargs):  # type: ignore[misc]
+        def decorator(func):
+            return func
+        return decorator if not args or callable(args[0]) is False else args[0]
 
 logger = structlog.get_logger()
 
@@ -18,6 +29,7 @@ class A2AQueryInput(BaseModel):
     query: str = Field(description="The natural language query to send to the agent")
 
 
+@traceable(name="query_a2a_agent", run_type="retriever")
 async def query_a2a_agent(
     agent: DiscoveredAgent,
     query: str,
@@ -116,15 +128,15 @@ def _format_result_for_llm(result: dict[str, Any], agent_name: str) -> str:
 
     if result["data"]:
         data = result["data"]
-        if len(data) <= 10:
+        if len(data) <= 50:
             # Show all rows for small results
             output.append(f"Data ({len(data)} rows):")
             for row in data:
                 output.append(f"  {row}")
         else:
             # Summarize large results
-            output.append(f"Data ({len(data)} rows, showing first 5):")
-            for row in data[:5]:
+            output.append(f"Data ({len(data)} rows, showing first 50):")
+            for row in data[:50]:
                 output.append(f"  {row}")
             output.append("  ...")
 

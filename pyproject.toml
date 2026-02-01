@@ -36,6 +36,7 @@ dependencies = [
     # LangChain (FE Agent)
     "langchain>=0.3.0",
     "langchain-openai>=0.2.0",
+    "langsmith>=0.2.0",
 
     # Utilities
     "structlog>=24.4.0",

@@ -1,15 +1,27 @@
 """Frontend Agent using LangChain for flexible tool orchestration."""
 
+import os
 from typing import Any
 
 import structlog
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import ToolMessage
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from conversational_bi.config.loader import get_config_loader
 from conversational_bi.fe_agent.tools.a2a_client import create_a2a_tools
 from conversational_bi.fe_agent.tools.discovery import AgentDiscovery, DiscoveredAgent
+
+# LangSmith tracing (enabled via LANGCHAIN_TRACING_V2=true)
+_langsmith_enabled = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+if _langsmith_enabled:
+    from langsmith import traceable
+else:
+    # No-op decorator when LangSmith is disabled
+    def traceable(*args, **kwargs):  # type: ignore[misc]
+        def decorator(func):
+            return func
+        return decorator if not args or callable(args[0]) is False else args[0]
 
 logger = structlog.get_logger()
 
@@ -35,7 +47,7 @@ class FEAgent:
 
         # Initialize LLM
         self.llm = ChatOpenAI(
-            model=self.config["llm"].get("model", self.llm_config.get("default_model", "gpt-4o")),
+            model=self.config["llm"].get("model", self.llm_config.get("default_model", "gpt-4.1-mini")),
             temperature=self.config["llm"].get("temperature", 0.0),
             max_tokens=self.config["llm"].get("max_tokens", 4000),
         )
@@ -49,6 +61,7 @@ class FEAgent:
         self.discovered_agents: list[DiscoveredAgent] = []
         self._initialized = False
 
+    @traceable(name="fe_agent_initialize", run_type="chain")
     async def initialize(self) -> None:
         """
         Initialize the agent by discovering remote agents.
@@ -106,6 +119,15 @@ If a question requires data from multiple sources, query each relevant agent and
 Always provide specific numbers and insights when available.
 If you cannot answer a question, explain what information is missing."""
 
+    @traceable(name="execute_tool", run_type="tool")
+    async def _execute_tool(self, tool_name: str, tool_args: dict[str, Any]) -> Any:
+        """Execute a tool by name with tracing."""
+        for tool in self.tools:
+            if tool.name == tool_name:
+                return await tool.ainvoke(tool_args)
+        return f"Tool {tool_name} not found"
+
+    @traceable(name="fe_agent_query", run_type="chain")
     async def query(
         self,
         user_input: str,
@@ -173,15 +195,8 @@ If you cannot answer a question, explain what information is missing."""
                         args=tool_args,
                     )
 
-                    # Find and execute the tool
-                    tool_result = None
-                    for tool in self.tools:
-                        if tool.name == tool_name:
-                            tool_result = await tool.ainvoke(tool_args)
-                            break
-
-                    if tool_result is None:
-                        tool_result = f"Tool {tool_name} not found"
+                    # Execute the tool with tracing
+                    tool_result = await self._execute_tool(tool_name, tool_args)
 
                     intermediate_steps.append({
                         "tool": tool_name,
