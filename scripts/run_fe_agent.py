@@ -15,6 +15,12 @@ Ensure data agents are running before starting this script.
 import os
 import subprocess
 import sys
+from pathlib import Path
+
+# Load .env file from project root
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))

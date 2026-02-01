@@ -1,10 +1,15 @@
 """Streamlit UI for the conversational BI application."""
 
 import asyncio
+from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 import pandas as pd
 import streamlit as st
+
+# Load .env from project root, override system env vars
+load_dotenv(Path(__file__).parent.parent.parent.parent / ".env", override=True)
 
 from conversational_bi.fe_agent.agent import FEAgent
 
@@ -56,6 +61,10 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
+    # Initialize pending query flag (for preset button clicks)
+    if "pending_query" not in st.session_state:
+        st.session_state.pending_query = None
+
     # Display chat history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -63,12 +72,19 @@ def main():
             if "data" in message and message["data"]:
                 try:
                     df = pd.DataFrame(message["data"])
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df, width="stretch")
                 except Exception:
                     pass
 
-    # Chat input
-    if prompt := st.chat_input("Ask a question about your data..."):
+    # Chat input - handle both direct input and pending queries from buttons
+    prompt = st.chat_input("Ask a question about your data...")
+
+    # Check for pending query from preset button
+    if st.session_state.pending_query:
+        prompt = st.session_state.pending_query
+        st.session_state.pending_query = None
+
+    if prompt:
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -106,7 +122,7 @@ def main():
 
                     if data_to_show:
                         df = pd.DataFrame(data_to_show)
-                        st.dataframe(df, use_container_width=True)
+                        st.dataframe(df, width="stretch")
 
                     # Add to chat history
                     st.session_state.messages.append({
@@ -139,7 +155,7 @@ def main():
 
         for query in example_queries:
             if st.button(query, key=query):
-                st.session_state.messages.append({"role": "user", "content": query})
+                st.session_state.pending_query = query
                 st.rerun()
 
         st.divider()

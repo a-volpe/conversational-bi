@@ -1,17 +1,23 @@
 # Global LLM settings
 
 default_provider: openai
-default_model: "${OPENAI_MODEL:gpt-4o}"
+default_model: "${OPENAI_MODEL:gpt-4.1-mini}"
 
 providers:
   openai:
     api_key: "${OPENAI_API_KEY}"
     models:
-      gpt-4o:
+      gpt-4.1-mini:
         max_tokens: 4000
+        temperature: 0.0
+      gpt-4.1:
+        max_tokens: 8000
         temperature: 0.0
       gpt-4o-mini:
         max_tokens: 2000
+        temperature: 0.0
+      gpt-4o:
+        max_tokens: 4000
         temperature: 0.0
 
 # Tool schemas used by agents

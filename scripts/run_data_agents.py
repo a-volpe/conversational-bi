@@ -17,6 +17,13 @@ import multiprocessing
 import os
 import signal
 import sys
+from functools import partial
+from pathlib import Path
+
+# Load .env file from project root
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -33,56 +40,53 @@ from conversational_bi.config.loader import get_config_loader
 from conversational_bi.database.connection import DatabasePool
 
 
-def create_agent_runner(agent_class, agent_name: str):
-    """Create a function that runs a specific agent."""
-
-    def run_agent():
-        async def setup_and_run():
-            # Load config
-            config_loader = get_config_loader()
-            agent_config = config_loader.load_agent_config(agent_name)
-            port = agent_config["agent"]["port"]
-
-            # Setup database connection
-            dsn = os.environ.get("DATABASE_URL")
-            if not dsn:
-                print(f"Error: DATABASE_URL not set for {agent_name} agent")
-                return
-
-            db = DatabasePool(dsn=dsn)
-            await db.connect()
-
-            try:
-                # Create agent
-                agent = agent_class(db.pool, config_loader=config_loader)
-                agent_card = agent.get_agent_card()
-
-                print(f"Starting {agent_card['name']} on port {port}...")
-
-                # Create and run A2A server
-                server = A2AServer(agent_card, agent.process_query)
-                config = uvicorn.Config(
-                    server.app,
-                    host="0.0.0.0",
-                    port=port,
-                    log_level="info",
-                )
-                server_instance = uvicorn.Server(config)
-                await server_instance.serve()
-            finally:
-                await db.close()
-
-        asyncio.run(setup_and_run())
-
-    return run_agent
-
-
 # Agent registry
 AGENTS = {
     "customers": (CustomersDataAgent, "customers"),
     "orders": (OrdersDataAgent, "orders"),
     "products": (ProductsDataAgent, "products"),
 }
+
+
+def run_agent(agent_class, agent_name: str):
+    """Run a specific agent. Must be top-level function for Windows multiprocessing."""
+
+    async def setup_and_run():
+        # Load config
+        config_loader = get_config_loader()
+        agent_config = config_loader.load_agent_config(agent_name)
+        port = agent_config["agent"]["port"]
+
+        # Setup database connection
+        dsn = os.environ.get("DATABASE_URL")
+        if not dsn:
+            print(f"Error: DATABASE_URL not set for {agent_name} agent")
+            return
+
+        db = DatabasePool(dsn=dsn)
+        await db.connect()
+
+        try:
+            # Create agent
+            agent = agent_class(db.pool, config_loader=config_loader)
+            agent_card = agent.get_agent_card()
+
+            print(f"Starting {agent_card['name']} on port {port}...")
+
+            # Create and run A2A server
+            server = A2AServer(agent_card, agent.process_query)
+            config = uvicorn.Config(
+                server.app,
+                host="0.0.0.0",
+                port=port,
+                log_level="info",
+            )
+            server_instance = uvicorn.Server(config)
+            await server_instance.serve()
+        finally:
+            await db.close()
+
+    asyncio.run(setup_and_run())
 
 
 def main():
@@ -130,7 +134,8 @@ def main():
     # Create processes for each agent
     processes = []
     for name, (agent_class, config_name) in agents_to_run.items():
-        runner = create_agent_runner(agent_class, config_name)
+        # Use partial to create a picklable function with arguments bound
+        runner = partial(run_agent, agent_class, config_name)
         process = multiprocessing.Process(target=runner, name=f"{name}-agent")
         processes.append(process)
 

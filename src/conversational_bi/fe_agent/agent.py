@@ -3,7 +3,7 @@
 from typing import Any
 
 import structlog
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
@@ -158,9 +158,14 @@ If you cannot answer a question, explain what information is missing."""
 
             # Check for tool calls
             if hasattr(response, "tool_calls") and response.tool_calls:
+                # Add the AI response with tool calls to messages first
+                current_messages.append(response)
+
+                # Process each tool call and collect results
                 for tool_call in response.tool_calls:
                     tool_name = tool_call["name"]
                     tool_args = tool_call["args"]
+                    tool_call_id = tool_call["id"]
 
                     logger.info(
                         "tool_call",
@@ -184,10 +189,9 @@ If you cannot answer a question, explain what information is missing."""
                         "output": tool_result,
                     })
 
-                    # Add tool result to messages
-                    current_messages.append(response)
+                    # Add tool result as ToolMessage with matching tool_call_id
                     current_messages.append(
-                        HumanMessage(content=f"Tool result from {tool_name}:\n{tool_result}")
+                        ToolMessage(content=str(tool_result), tool_call_id=tool_call_id)
                     )
             else:
                 # No tool calls, return the response

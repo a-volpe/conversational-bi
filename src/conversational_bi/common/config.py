@@ -1,17 +1,24 @@
 """Configuration management using pydantic-settings."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Compute project root .env path (src/conversational_bi/common/config.py -> project root)
+_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+_ENV_FILE = _PROJECT_ROOT / ".env"
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_ENV_FILE) if _ENV_FILE.exists() else ".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # Prioritize .env file over system/user environment variables
+        env_file_override=True,
     )
 
     # Database

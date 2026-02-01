@@ -43,16 +43,18 @@ class OpenAIClient:
     Provides methods for SQL generation, query analysis, and response synthesis.
     """
 
-    def __init__(self, api_key: str | None = None, model: str = "gpt-4o"):
+    def __init__(self, api_key: str | None = None, model: str = "gpt-4o", temperature: float = 0.0):
         """
         Initialize the OpenAI client.
 
         Args:
             api_key: OpenAI API key. Defaults to settings.openai_api_key.
             model: Model to use for completions.
+            temperature: Temperature for completions (0.0-2.0). Lower is more deterministic.
         """
         self._api_key = api_key or get_settings().openai_api_key
         self._model = model
+        self._temperature = temperature
         self._client = AsyncOpenAI(api_key=self._api_key)
 
     async def generate_sql(
@@ -87,6 +89,7 @@ class OpenAIClient:
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
+                temperature=self._temperature,
                 tools=[
                     {
                         "type": "function",
@@ -186,6 +189,7 @@ class OpenAIClient:
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
+                temperature=self._temperature,
                 tools=[
                     {
                         "type": "function",
@@ -288,6 +292,7 @@ class OpenAIClient:
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
+                temperature=self._temperature,
             )
 
             return response.choices[0].message.content or "Unable to generate response."

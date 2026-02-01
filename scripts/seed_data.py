@@ -17,7 +17,13 @@ import random
 import sys
 from datetime import datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from uuid import uuid4
+
+# Load .env file from project root
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))

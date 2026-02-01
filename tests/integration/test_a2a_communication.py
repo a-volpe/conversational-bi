@@ -220,7 +220,7 @@ class TestA2ATaskHandling:
 
 
 class TestAgentDiscoveryService:
-    """Test agent discovery from orchestrator side."""
+    """Test agent discovery from FE agent side."""
 
     @pytest.fixture
     def mock_server(self):
@@ -235,9 +235,7 @@ class TestAgentDiscoveryService:
     @pytest.mark.asyncio
     async def test_discover_agent_from_url(self, mock_server):
         """Should be able to discover agent via HTTP."""
-        from conversational_bi.agents.orchestrator.discovery import AgentDiscoveryService
-
-        # We need to mock the HTTP call since we're not running a real server
+        # Fetch agent card directly from mock server
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=mock_server.app)
         ) as client:
@@ -248,3 +246,8 @@ class TestAgentDiscoveryService:
         card = response.json()
         assert card["name"] == "Customers Data Agent"
         assert len(card["skills"]) > 0
+
+        # Verify the card can be parsed by the new discovery module
+        from conversational_bi.fe_agent.tools.discovery import DiscoveredAgent
+        agent = DiscoveredAgent.from_agent_card(card, "http://localhost:9999")
+        assert agent.name == "Customers Data Agent"

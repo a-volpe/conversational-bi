@@ -6,7 +6,7 @@ agent:
   description: "Answers business questions by querying specialized data agents"
 
 llm:
-  model: "${OPENAI_MODEL:gpt-4o}"
+  model: "${OPENAI_MODEL:gpt-4.1-mini}"
   temperature: 0.0
   max_tokens: 4000
 
