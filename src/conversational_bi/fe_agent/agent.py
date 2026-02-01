@@ -112,8 +112,9 @@ You have access to the following data agents that can answer questions about bus
 
 When a user asks a question:
 1. Determine which agent(s) can best answer the question
-2. Use the appropriate tool to query the agent
-3. Synthesize the results into a clear, helpful answer
+2. Enrich the question if needed for clarity
+3. Use the appropriate tool to query the agent
+4. Synthesize the results into a clear, helpful answer
 
 If a question requires data from multiple sources, query each relevant agent and combine the results.
 Always provide specific numbers and insights when available.
