@@ -1,12 +1,15 @@
 # Global LLM settings
 
 default_provider: openai
-default_model: "${OPENAI_MODEL:gpt-4.1-mini}"
+default_model: "${OPENAI_MODEL:gpt-5-mini}"
 
 providers:
   openai:
     api_key: "${OPENAI_API_KEY}"
     models:
+      gpt-5-mini:
+        max_tokens: 4000
+        reasoning_effort: low
       gpt-4.1-mini:
         max_tokens: 4000
         temperature: 0.0

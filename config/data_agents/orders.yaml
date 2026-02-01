@@ -8,9 +8,9 @@ agent:
   table: orders  # Reference to schema.yaml
 
 llm:
-  model: "${OPENAI_MODEL:gpt-4.1-mini}"
-  temperature: 0.0
+  model: "${OPENAI_MODEL:gpt-5-mini}"
   max_tokens: 2000
+  reasoning_effort: low
 
 prompts:
   sql_generator: |
