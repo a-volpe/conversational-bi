@@ -30,6 +30,7 @@ class DiscoveredAgent:
     version: str = "1.0.0"
     skills: list[dict[str, Any]] = field(default_factory=list)
     capabilities: dict[str, Any] = field(default_factory=dict)
+    schema: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_agent_card(cls, card: dict, base_url: str) -> "DiscoveredAgent":
@@ -41,6 +42,7 @@ class DiscoveredAgent:
             version=card.get("version", "1.0.0"),
             skills=card.get("skills", []),
             capabilities=card.get("capabilities", {}),
+            schema=card.get("schema", {}),
         )
 
     def get_skill_names(self) -> list[str]:
@@ -54,6 +56,28 @@ class DiscoveredAgent:
             name = skill.get("name", skill.get("id", "unknown"))
             desc = skill.get("description", "")
             lines.append(f"  - {name}: {desc}")
+        return "\n".join(lines)
+
+    def get_schema_description(self) -> str:
+        """Get formatted table schema for prompts."""
+        if not self.schema:
+            return ""
+
+        lines = [f"  Table: {self.schema.get('table', 'unknown')}"]
+        if self.schema.get("description"):
+            lines.append(f"  Description: {self.schema['description']}")
+
+        columns = self.schema.get("columns", [])
+        if columns:
+            lines.append("  Columns:")
+            for col in columns:
+                col_desc = f"    - {col['name']} ({col['type']})"
+                if col.get("description"):
+                    col_desc += f": {col['description']}"
+                if col.get("allowed_values"):
+                    col_desc += f" [Values: {', '.join(col['allowed_values'])}]"
+                lines.append(col_desc)
+
         return "\n".join(lines)
 
 
@@ -81,7 +105,6 @@ class AgentDiscovery:
         self._discovered: list[DiscoveredAgent] = []
 
 
-    #TODO: from langsmith trace seems it discovers agents twice
     @traceable(name="discover_agents", run_type="chain")
     async def discover_all(self) -> list[DiscoveredAgent]:
         """
@@ -146,5 +169,8 @@ class AgentDiscovery:
         for agent in self._discovered:
             lines.append(f"**{agent.name}**: {agent.description}")
             lines.append(agent.get_skill_descriptions())
+            schema_desc = agent.get_schema_description()
+            if schema_desc:
+                lines.append(schema_desc)
             lines.append("")
         return "\n".join(lines)

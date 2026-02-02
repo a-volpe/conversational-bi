@@ -2,6 +2,66 @@
 
 Conversational Business Intelligence application using the A2A (Agent-to-Agent) protocol with a multi-agent architecture powered by LangChain.
 
+## Claude Code Configuration
+
+### Current vs Deprecated Patterns
+
+**CRITICAL**: Always use current patterns. Never use deprecated patterns even if you find them in existing code.
+
+| Current (Always Use) | Deprecated (Never Use) | Notes |
+|---------------------|------------------------|-------|
+| `.claude/skills/` | `.claude/commands/` | Skills directory for custom commands |
+| `gpt-4.1-mini` | `gpt-4o-mini` | Latest OpenAI mini model |
+| `gpt-5-mini` | `gpt-4o` | Latest OpenAI model naming |
+
+### Guidelines for Claude Code
+
+1. **When creating new skills**: ALWAYS place them in `.claude/skills/*.md` (not `.claude/commands/`)
+2. **When referencing models**: Use the latest naming conventions (`gpt-4.1-mini`, `gpt-5-mini`)
+3. **When finding deprecated patterns**: Flag them and ask the user if they want to migrate
+4. **Never follow deprecated patterns**: Even if you find them in the existing codebase, use current patterns for all new work
+
+### Maintaining CLAUDE.md
+
+**IMPORTANT**: After completing any major implementation or bug fix, Claude MUST update this CLAUDE.md file to capture learnings and improve future behavior.
+
+#### When to Update CLAUDE.md
+
+- After implementing a new feature or module
+- After fixing a significant bug (especially if it required non-obvious solutions)
+- When discovering new patterns that should be followed or avoided
+- When identifying edge cases or gotchas in the codebase
+- After refactoring that changes how components interact
+
+#### What to Document
+
+1. **New Patterns**: Add successful patterns to the "Key Patterns" section or create subsections
+2. **Deprecated Patterns**: Add to the "Current vs Deprecated Patterns" table
+3. **Common Pitfalls**: Document bugs and their solutions to prevent recurrence
+4. **Architecture Changes**: Update the Architecture section if structure changes
+5. **New Environment Variables**: Add to the Environment Variables table
+6. **New Scripts or Tools**: Document in the appropriate section
+
+#### Example Updates
+
+After fixing a datetime parsing bug:
+```markdown
+## Known Gotchas
+
+### Datetime Handling
+- Always use ISO 8601 format for datetime serialization
+- Handle timezone-aware and naive datetimes separately
+- Use `datetime.fromisoformat()` for parsing (supports both formats)
+```
+
+After adding a new agent:
+```markdown
+### Data Agents
+- **New Agent** (`:800X`) - Description of what it handles
+```
+
+This self-improving documentation ensures Claude learns from each session and avoids repeating mistakes.
+
 ## Architecture
 
 ```

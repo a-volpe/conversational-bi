@@ -1,16 +1,13 @@
 """Tests for YAML configuration loader."""
 
 import os
+
 import pytest
-from pathlib import Path
 
 from conversational_bi.config.loader import (
+    ConfigLoader,
     load_yaml_config,
     substitute_env_vars,
-    load_schema,
-    load_agent_config,
-    load_llm_config,
-    ConfigLoader,
 )
 
 

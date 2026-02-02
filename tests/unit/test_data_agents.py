@@ -1,12 +1,11 @@
 """Tests for config-driven data agents."""
 
-import pytest
 from datetime import date, datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from conversational_bi.agents.data_agents.base_data_agent import (
-    BaseDataAgent,
     CustomersDataAgent,
     OrdersDataAgent,
     ProductsDataAgent,

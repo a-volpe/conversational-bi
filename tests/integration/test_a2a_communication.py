@@ -1,13 +1,33 @@
 """Integration tests for A2A protocol communication."""
 
-import pytest
-import pytest_asyncio
 import httpx
+import pytest
 
 from conversational_bi.agents.base.a2a_server import A2AServer
-from conversational_bi.agents.data_agents.customers_agent.agent import (
-    create_customers_agent_card,
-)
+
+
+def _create_test_agent_card(base_url: str = "http://localhost:8001") -> dict:
+    """Create a minimal agent card for testing purposes."""
+    return {
+        "name": "Customers Data Agent",
+        "description": "Test agent for customer data",
+        "url": f"{base_url}/",
+        "version": "1.0.0",
+        "defaultInputModes": ["text/plain", "application/json"],
+        "defaultOutputModes": ["text/plain", "application/json"],
+        "capabilities": {"streaming": False, "pushNotifications": False},
+        "skills": [
+            {
+                "id": "customer_count",
+                "name": "Customer Count",
+                "description": "Count customers",
+                "tags": ["count", "customers"],
+                "examples": ["How many customers?"],
+                "inputModes": ["text/plain"],
+                "outputModes": ["text/plain", "application/json"],
+            }
+        ],
+    }
 
 
 class TestA2AServerDiscovery:
@@ -16,7 +36,7 @@ class TestA2AServerDiscovery:
     @pytest.fixture
     def agent_card(self):
         """Sample agent card for testing."""
-        return create_customers_agent_card("http://localhost:9999")
+        return _create_test_agent_card("http://localhost:9999")
 
     @pytest.fixture
     def mock_handler(self):
@@ -81,7 +101,7 @@ class TestA2ATaskHandling:
     @pytest.fixture
     def server(self, mock_handler):
         """Create server with mock handler."""
-        card = create_customers_agent_card()
+        card = _create_test_agent_card()
         return A2AServer(card, mock_handler)
 
     @pytest.mark.asyncio
@@ -229,7 +249,7 @@ class TestAgentDiscoveryService:
             from conversational_bi.agents.data_agents.base_data_agent import QueryResult
             return QueryResult(success=True, text="OK", data=[])
 
-        card = create_customers_agent_card("http://localhost:9999")
+        card = _create_test_agent_card("http://localhost:9999")
         return A2AServer(card, handler)
 
     @pytest.mark.asyncio

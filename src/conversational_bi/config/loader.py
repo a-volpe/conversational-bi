@@ -136,13 +136,6 @@ class ConfigLoader:
             self.config_dir / "fe_agent.yaml"
         )
 
-    def load_app_config(self) -> dict[str, Any]:
-        """Load the application configuration."""
-        return self._load_cached(
-            "app",
-            self.config_dir / "app.yaml"
-        )
-
     def load_agent_config(self, agent_name: str) -> dict[str, Any]:
         """
         Load a data agent's configuration.
@@ -211,10 +204,6 @@ class ConfigLoader:
 
         return "\n".join(lines)
 
-    def clear_cache(self):
-        """Clear the configuration cache."""
-        self._cache.clear()
-
 
 # Global loader instance
 _global_loader: ConfigLoader | None = None
@@ -226,21 +215,3 @@ def get_config_loader() -> ConfigLoader:
     if _global_loader is None:
         _global_loader = ConfigLoader()
     return _global_loader
-
-
-# Convenience functions that use the global loader
-
-
-def load_schema() -> dict[str, Any]:
-    """Load the database schema configuration."""
-    return get_config_loader().load_schema()
-
-
-def load_llm_config() -> dict[str, Any]:
-    """Load the LLM configuration."""
-    return get_config_loader().load_llm_config()
-
-
-def load_agent_config(agent_name: str) -> dict[str, Any]:
-    """Load a data agent's configuration."""
-    return get_config_loader().load_agent_config(agent_name)

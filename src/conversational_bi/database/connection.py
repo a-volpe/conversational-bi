@@ -87,29 +87,3 @@ class DatabasePool:
                 result = await conn.fetch("SELECT * FROM table")
         """
         return self.pool.acquire()
-
-
-# Global pool instance for convenience
-_global_pool: DatabasePool | None = None
-
-
-async def get_db_pool() -> DatabasePool:
-    """
-    Get or create the global database pool.
-
-    Returns:
-        The global DatabasePool instance.
-    """
-    global _global_pool
-    if _global_pool is None:
-        _global_pool = DatabasePool()
-        await _global_pool.connect()
-    return _global_pool
-
-
-async def close_db_pool() -> None:
-    """Close the global database pool."""
-    global _global_pool
-    if _global_pool:
-        await _global_pool.close()
-        _global_pool = None

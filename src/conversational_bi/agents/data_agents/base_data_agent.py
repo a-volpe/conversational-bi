@@ -96,6 +96,9 @@ class BaseDataAgent(ABC):
         config = self.agent_config["agent"]
         skills = self.agent_config.get("skills", [])
 
+        # Build schema info for discovery
+        schema_info = self._build_schema_info()
+
         return {
             "name": config["name"],
             "description": config.get("description", f"Data agent for {self.table_name}"),
@@ -108,6 +111,27 @@ class BaseDataAgent(ABC):
                 "pushNotifications": False,
             },
             "skills": skills,
+            "schema": schema_info,
+        }
+
+    def _build_schema_info(self) -> dict:
+        """Build table schema info for agent card discovery."""
+        columns = []
+        for col in self.table_schema.get("columns", []):
+            col_info = {
+                "name": col["name"],
+                "type": col["type"],
+            }
+            if col.get("description"):
+                col_info["description"] = col["description"]
+            if col.get("allowed_values"):
+                col_info["allowed_values"] = col["allowed_values"]
+            columns.append(col_info)
+
+        return {
+            "table": self.table_name,
+            "description": self.table_schema.get("description", ""),
+            "columns": columns,
         }
 
     async def process_query(self, user_query: str) -> QueryResult:

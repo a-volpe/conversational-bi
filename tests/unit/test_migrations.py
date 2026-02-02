@@ -1,8 +1,8 @@
 """Tests for database migration system."""
 
-import pytest
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from conversational_bi.database.migrations.runner import (
     MigrationRunner,

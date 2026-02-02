@@ -1,15 +1,16 @@
 """Tests for the FE Agent with LangChain."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from conversational_bi.fe_agent.agent import FEAgent
-from conversational_bi.fe_agent.tools.discovery import AgentDiscovery, DiscoveredAgent
 from conversational_bi.fe_agent.tools.a2a_client import (
+    _format_result_for_llm,
     create_a2a_tools,
     query_a2a_agent,
-    _format_result_for_llm,
 )
+from conversational_bi.fe_agent.tools.discovery import AgentDiscovery, DiscoveredAgent
 
 
 class TestDiscoveredAgent:

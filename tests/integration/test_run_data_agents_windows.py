@@ -32,7 +32,7 @@ import multiprocessing
 import pickle
 import sys
 from functools import partial
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -84,7 +84,8 @@ class TestWindowsMultiprocessing:
         """Partial application of run_agent should be picklable."""
         sys.path.insert(0, "scripts")
         try:
-            from run_data_agents import run_agent, AGENTS
+            from run_data_agents import run_agent
+
             from conversational_bi.agents.data_agents.base_data_agent import (
                 CustomersDataAgent,
             )
@@ -131,6 +132,7 @@ class TestWindowsMultiprocessing:
         sys.path.insert(0, "scripts")
         try:
             from run_data_agents import run_agent
+
             from conversational_bi.agents.data_agents.base_data_agent import (
                 CustomersDataAgent,
             )
@@ -158,6 +160,7 @@ class TestWindowsMultiprocessing:
         sys.path.insert(0, "scripts")
         try:
             import inspect
+
             from run_data_agents import main
 
             # Get the source code of main
