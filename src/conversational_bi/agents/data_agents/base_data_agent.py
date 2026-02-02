@@ -225,16 +225,25 @@ class BaseDataAgent(ABC):
         except ValueError:
             pass
 
-        # Try parsing as ISO 8601 datetime (e.g., '2025-10-01T00:00:00Z')
-        for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+        # Try parsing as ISO 8601 datetime with timezone offset (e.g., '2025-10-01T00:00:00+00:00')
+        if "T" in value and ("+" in value or value.endswith("Z")):
             try:
-                parsed = datetime.strptime(value, fmt)
-                # Return date if the format was date-only
-                if fmt == "%Y-%m-%d":
-                    return parsed.date()
-                return parsed
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
-                continue
+                pass
+
+        # Try parsing as ISO 8601 datetime without timezone (e.g., '2025-10-01T00:00:00')
+        if "T" in value:
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                pass
+
+        # Try parsing as date (e.g., '2025-10-01')
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            pass
 
         return value
 
